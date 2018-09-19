@@ -42,7 +42,7 @@
                 if(this.visitorData.imageId == "") {
                     return defaultImgUrl;
                 } else {
-                    return PARK_IMAGE_URL + this.visitorData.imageId;
+                    return this.visitorData.imageId;
                 }
             },
             cancelVisitor() {

@@ -100,11 +100,25 @@ public class Staff {
     public boolean equals(Object obj) {
         if (obj instanceof Staff) {
             Staff person = (Staff) obj;
-            return (person.personInformation.getName().equals(personInformation.getName())
-                        && person.personInformation.getPhone().equals(personInformation.getPhone()));
+            boolean same = true;
+            if(person.personInformation.getName() != null) {
+                if(!person.personInformation.getName().equals(personInformation.getName())) {
+                    same = false;
+                }
+            }
+            if(same && (person.personInformation.getPhone() != null) ) {
+                if(!person.personInformation.getPhone().equals(personInformation.getPhone())) {
+                    same = false;
+                }
+            }
+            if(same && (person.personInformation.getId() != null) ) {
+                if(!person.personInformation.getId().equals(personInformation.getId())) {
+                    same = false;
+                }
+            }
+            return same;
         } else {
             return super.equals(obj);
-
         }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -27,8 +28,11 @@ public class IotApplication {
 	public RestTemplate restTemplate() {
 		RestTemplate  restTemplate = new RestTemplate();
 		StringHttpMessageConverter stringHttpMessageConverter=new StringHttpMessageConverter(Charset.forName("UTF-8"));
+		ByteArrayHttpMessageConverter byteArrayHttpMessageConverter = new ByteArrayHttpMessageConverter();
+
 		List<HttpMessageConverter<?>> list=new ArrayList<>();
 		list.add(stringHttpMessageConverter);
+		list.add(byteArrayHttpMessageConverter);
 		restTemplate.setMessageConverters(list);
 		return restTemplate;
 	}

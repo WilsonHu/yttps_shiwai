@@ -18,6 +18,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -87,8 +88,9 @@ public class VisitorController {
                     List<Visitor> tmpList = JSONArray.parseArray(responseModel.getResult(), Visitor.class);
                     if (tmpList != null && tmpList.size() > 0) {
                         for (Visitor visitor : tmpList) {
-                            //TODO:
-                            visitor.getFace_list().get(0).getFace_image_id();
+                            String url = PARK_BASE_URL + "/image/" + visitor.getFace_list().get(0).getFace_image_id();
+                            byte[] imageBytes = restTemplate.getForObject(url, byte[].class);
+                            visitor.getFace_list().get(0).setFace_image_id("data:image/jpeg;base64," + Base64Utils.encodeToString(imageBytes));
                         }
                         PageInfo pageInfo = new PageInfo(tmpList);
                         return ResultGenerator.genSuccessResult(pageInfo);

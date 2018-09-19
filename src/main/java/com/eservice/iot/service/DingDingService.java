@@ -31,7 +31,7 @@ import java.util.List;
 @Component
 public class DingDingService {
 
-    private final static Logger logger = LoggerFactory.getLogger(TagService.class);
+    private final static Logger logger = LoggerFactory.getLogger(DingDingService.class);
 
     @Autowired
     private TokenService tokenService;
@@ -250,6 +250,7 @@ public class DingDingService {
      * @return
      */
     public OapiMessageCorpconversationAsyncsendV2Response sendVisitorMessage(String userID, Visitor visitor) throws ApiException {
+        logger.warn("UserId: ==>" + userID + "; Visitor: ==>" + visitor.getVisitor_id());
         OapiUserListResponse.Userlist user = null;
         for (int i = 0; i < dingdingUserList.size(); i++) {
             if (dingdingUserList.get(i).getUserid().equals(userID)) {
@@ -294,6 +295,7 @@ public class DingDingService {
 	        }
 	        return response;
         } else {
+            logger.error("Ding ding user not found!");
             return null;
         }
     }

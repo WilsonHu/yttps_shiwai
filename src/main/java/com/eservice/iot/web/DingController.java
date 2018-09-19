@@ -1,5 +1,6 @@
 package com.eservice.iot.web;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.dingtalk.api.response.OapiUserListResponse;
@@ -55,6 +56,7 @@ public class DingController {
     @PostMapping("/visit")
     public Result visit(@RequestBody String jsonData) {
         SendVisitorData data = JSONObject.parseObject(jsonData, SendVisitorData.class);
+        logger.warn("ding visit data: " + jsonData);
         String staffId = data.getStaffId();
         Staff staff = null;
         for (int i = 0; i < staffService.getStaffList().size() && (staff == null); i++) {
@@ -80,7 +82,8 @@ public class DingController {
                                 boolean success = false;
                                 try {
                                     ///发送钉钉
-                                    if (dingDingService.sendVisitorMessage(staff.getPersonInformation().getCard_no(), tmpList.get(0)) != null) {
+                                    logger.warn("Staff data: ==>" + JSON.toJSONString(staff));
+                                    if (dingDingService.sendVisitorMessage(staff.getPersonInformation().getId(), tmpList.get(0)) != null) {
                                         success = true;
                                     }
                                 } catch (ApiException e) {
