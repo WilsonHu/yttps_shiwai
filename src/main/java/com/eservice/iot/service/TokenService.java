@@ -45,6 +45,9 @@ public class TokenService {
     @Value("${dd_corp_secret_2}")
     private String CORP_SECRET_2;
 
+    @Value("${dingding_url}")
+    private String dingdingUrl;
+
     @Autowired
     private RestTemplate restTemplate;
 
@@ -98,7 +101,7 @@ public class TokenService {
         if (oapiGettokenResponse != null && (System.currentTimeMillis() < oapiGettokenResponse.getExpiresIn() - EXPIRE_BUFFER)) {
             token = oapiGettokenResponse.getAccessToken();
         } else {
-            DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/gettoken");
+            DingTalkClient client = new DefaultDingTalkClient(dingdingUrl + "/gettoken");
             OapiGettokenRequest request = new OapiGettokenRequest();
             request.setCorpid(CORP_ID);
             request.setCorpsecret(CORP_SECRET);
@@ -123,7 +126,7 @@ public class TokenService {
      */
     public String getDDToken2() {
         String token = null;
-        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/gettoken");
+        DingTalkClient client = new DefaultDingTalkClient(dingdingUrl + "/gettoken");
         OapiGettokenRequest request = new OapiGettokenRequest();
         request.setCorpid(CORP_ID_2);
         request.setCorpsecret(CORP_SECRET_2);

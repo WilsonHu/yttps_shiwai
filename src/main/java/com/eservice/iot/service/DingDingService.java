@@ -59,6 +59,9 @@ public class DingDingService {
     @Value("${visitor_confirm_url}")
     private String visitorConfirmUrl;
 
+    @Value("${dingding_url}")
+    private String dingdingUrl;
+
     private String mAgentID = "";
 
     /**
@@ -68,7 +71,7 @@ public class DingDingService {
     private void fetchDingDingUserList() {
 
         boolean updateSuccess = false;
-        DingTalkClient clientDep = new DefaultDingTalkClient("https://oapi.dingtalk.com/department/list");
+        DingTalkClient clientDep = new DefaultDingTalkClient(dingdingUrl + "/department/list");
         OapiDepartmentListRequest requestDep = new OapiDepartmentListRequest();
         requestDep.setHttpMethod("GET");
         try {
@@ -76,7 +79,7 @@ public class DingDingService {
             List<OapiDepartmentListResponse.Department> departmentList = responseDep.getDepartment();
             List<OapiUserListResponse.Userlist> allUserList = new ArrayList<>();
             for (int i = 0; i < departmentList.size(); i++) {
-                DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/user/list");
+                DingTalkClient client = new DefaultDingTalkClient(dingdingUrl + "/user/list");
                 OapiUserListRequest request = new OapiUserListRequest();
                 request.setDepartmentId(departmentList.get(i).getId());
                 request.setHttpMethod("GET");
@@ -142,7 +145,7 @@ public class DingDingService {
     private void fetchDingDingUserList2() {
 
         boolean updateSuccess = false;
-        DingTalkClient clientDep = new DefaultDingTalkClient("https://oapi.dingtalk.com/department/list");
+        DingTalkClient clientDep = new DefaultDingTalkClient(dingdingUrl + "/department/list");
         OapiDepartmentListRequest requestDep = new OapiDepartmentListRequest();
         requestDep.setHttpMethod("GET");
         try {
@@ -150,7 +153,7 @@ public class DingDingService {
             List<OapiDepartmentListResponse.Department> departmentList = responseDep.getDepartment();
             List<OapiUserListResponse.Userlist> allUserList = new ArrayList<>();
             for (int i = 0; i < departmentList.size(); i++) {
-                DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/user/list");
+                DingTalkClient client = new DefaultDingTalkClient( dingdingUrl + "/user/list");
                 OapiUserListRequest request = new OapiUserListRequest();
                 request.setDepartmentId(departmentList.get(i).getId());
                 request.setHttpMethod("GET");
@@ -220,7 +223,7 @@ public class DingDingService {
      * @return
      */
     public OapiMessageCorpconversationAsyncsendV2Response sendTextMessage(String userList, String message) throws ApiException {
-        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
+        DingTalkClient client = new DefaultDingTalkClient(dingdingUrl + "/topapi/message/corpconversation/asyncsend_v2");
 
         OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
         request.setUseridList(userList);
@@ -264,7 +267,7 @@ public class DingDingService {
         }
 
         if (user != null) {
-            DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
+            DingTalkClient client = new DefaultDingTalkClient(dingdingUrl + "/topapi/message/corpconversation/asyncsend_v2");
             OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
             request.setUseridList(userID);
             request.setAgentId(Long.valueOf(mAgentID));
