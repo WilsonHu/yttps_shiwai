@@ -8,11 +8,10 @@ import com.eservice.iot.core.ResultGenerator;
 import com.eservice.iot.model.ResponseModel;
 import com.eservice.iot.model.Tag;
 import com.eservice.iot.model.Visitor;
-import com.eservice.iot.service.ResponseCode;
-import com.eservice.iot.service.TagService;
-import com.eservice.iot.service.TokenService;
-import com.eservice.iot.service.VisitorService;
+import com.eservice.iot.service.*;
 import com.github.pagehelper.PageInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -38,6 +37,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/visitors")
 public class VisitorController {
+
+    private final static Logger logger = LoggerFactory.getLogger(VisitorController.class);
+
     @Resource
     private TokenService tokenService;
     @Resource
@@ -46,6 +48,8 @@ public class VisitorController {
     private VisitorService visitorService;
     @Resource
     private TagService tagService;
+    @Resource
+    private MqttMessageHelper mqttMessageHelper;
 
     @Value("${park_base_url}")
     private String PARK_BASE_URL;
@@ -109,6 +113,11 @@ public class VisitorController {
         HttpEntity entity = new HttpEntity(headers);
         ResponseEntity<String> responseEntity = restTemplate.exchange(PARK_BASE_URL + "/visitors/" + visitorId, HttpMethod.DELETE, entity, String.class);
         if (responseEntity.getStatusCodeValue() == ResponseCode.OK) {
+            VisitorPassResult result = new VisitorPassResult();
+            result.setResult(0);
+            result.setMsg("访客被拒绝！");
+            mqttMessageHelper.sendToClient("/visitor/" + visitorId, JSON.toJSONString(result));
+            logger.warn("Visitor is rejected! Visitor ID : ==>{}", visitorId);
             return ResultGenerator.genSuccessResult();
         }
         return ResultGenerator.genFailResult("获取访客信息失败！");
@@ -143,6 +152,11 @@ public class VisitorController {
                 HttpEntity entity = new HttpEntity(JSON.toJSONString(visitor), headers);
                 ResponseEntity<String> responseEntity = restTemplate.exchange(PARK_BASE_URL + "/visitors/" + visitorId, HttpMethod.PUT, entity, String.class);
                 if (responseEntity.getStatusCodeValue() == ResponseCode.OK) {
+                    VisitorPassResult result = new VisitorPassResult();
+                    result.setResult(1);
+                    result.setMsg("同意来访！");
+                    mqttMessageHelper.sendToClient("/visitor/" + visitorId, JSON.toJSONString(result));
+                    logger.warn("Visitor is accept! Visitor ID : ==>{}", visitorId);
                     return ResultGenerator.genSuccessResult();
                 }
             }

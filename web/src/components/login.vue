@@ -117,8 +117,8 @@
                         type: 'POST',
                         dataType: 'json',
                         data: {
-                            "account": this.ruleForm2.account,
-                            "password": this.ruleForm2.password,
+                            "account": _this.ruleForm2.account,
+                            "password": _this.ruleForm2.password,
                         },
                         success: function (res) {
                             _this.isError = res.code != 200;
