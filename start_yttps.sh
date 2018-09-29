@@ -4,10 +4,6 @@
 #
 #2.visitor_confirm_url is the public network website address for customer to confirm
 #visitor.
-cd /home/yituadmin/yttps
-java -jar iot-0.0.1.jar \
-	 --park_base_url=http://127.0.0.1:9812 \
-     --visitor_confirm_url=http://127.0.0.1/yttps \
-	 --park_username=admin \
-	 --park_password=admin \
-	 > /dev/null &
+ytpark_user='ubuntu'
+cd /home/$ytpark_user/yttps/
+nohup /home/$ytpark_user/park_deploy/infrastructure/shared/jdk/bin/java -jar iot-0.0.1.jar >/dev/null &
