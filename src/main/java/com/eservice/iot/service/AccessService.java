@@ -174,26 +174,23 @@ public class AccessService {
                         filterList.add(visitRecord);
                     }
                 }
-                for (VisitRecord item : filterList) {
-                    if (policyService.getmCustomerInDeviceIdList().contains(item.getDevice_id())) {
-                        myExecutePool.execute(new Runnable() {
-                            @Override
-                            public void run() {
+                myExecutePool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ///原来移除in和out的tag在不同的线程中，所以会导致第二个线程获取访客信息是还有第一个线程本该移除的tag，导致tag清除错误
+                        ///现在把移除的操作放到一个线程中，虽然降低了效率，但是移除的操作是非并行
+                        for (VisitRecord item : filterList) {
+                            if (policyService.getmCustomerInDeviceIdList().contains(item.getDevice_id())) {
                                 logger.warn("清除{}的customer_in标签, {}", item.getPerson().getPerson_information().getName(), formatter.format(new Date()));
                                 removeTags(item, policyService.getmCustomerInTagIdList());
                             }
-                        });
-                    }
-                    if (policyService.getmCustomerOutDeviceIdList().contains(item.getDevice_id())) {
-                        myExecutePool.execute(new Runnable() {
-                            @Override
-                            public void run() {
+                            if (policyService.getmCustomerOutDeviceIdList().contains(item.getDevice_id())) {
                                 logger.warn("清除{}的customer_out标签, {}", item.getPerson().getPerson_information().getName(), formatter.format(new Date()));
                                 removeTags(item, policyService.getmCustomerOutTagIdList());
                             }
-                        });
+                        }
                     }
-                }
+                });
             }
         }
     }
