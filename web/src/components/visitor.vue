@@ -6,10 +6,11 @@
             <mt-field label="手机:" :type="phone" readonly v-model="visitorData.phone" style="font-weight: bold"></mt-field>
             <el-row type="flex" justify="center" style="margin-top: 20px">
                 <img  class="scale-img" :src="visitorImage()"/>
+                <img  v-if="visitorData.tag_id_list.length > 0" style="z-index: 10;position: absolute;height: 180px;margin-top: 150px;margin-left: 50px" src="../assets/img/approve.png"/>
             </el-row>
             <el-row style="margin-top: 10px" type="flex" justify="center">
                 <mt-button type="danger" @click="cancelVisitor()" style="min-width: 100px">拒  绝</mt-button>
-                <mt-button type="primary" @click="acceptVisitor()" style="margin-left: 20px;min-width: 100px">同  意</mt-button>
+                <mt-button v-if="visitorData.tag_id_list.length == 0" type="primary" @click="acceptVisitor()" style="margin-left: 20px;min-width: 100px">同  意</mt-button>
             </el-row>
         </div>
         <div v-if="dataError">
@@ -33,7 +34,8 @@
                 visitorData: {
                     name: "",
                     phone: "",
-                    imageId: ""
+                    imageId: "",
+                    tag_id_list:[]
                 }
             }
         },
@@ -112,6 +114,7 @@
                                 _this.visitorData.name = data.data.list[0].person_information.name;
                                 _this.visitorData.phone = data.data.list[0].person_information.phone;
                                 _this.visitorData.imageId = data.data.list[0].face_list[0].face_image_id;
+                                _this.visitorData.tag_id_list = data.data.list[0].tag_id_list;
                             }
                         }
                     },
@@ -132,5 +135,6 @@
         background-size:contain|cover;
         width:100%;
         height: 85%;
+        z-index: 0;
     }
 </style>
