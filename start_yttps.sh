@@ -5,5 +5,6 @@
 #2.visitor_confirm_url is the public network website address for customer to confirm
 #visitor.
 ytpark_user='ubuntu'
+/etc/init.d/apollo-broker-service start >/dev/null &
 cd /home/$ytpark_user/yttps/
 nohup /home/$ytpark_user/park_deploy/infrastructure/shared/jdk/bin/java -jar iot-0.0.1.jar >/dev/null &

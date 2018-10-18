@@ -3,8 +3,6 @@ package com.eservice.iot.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.dingtalk.api.response.OapiUserListResponse;
-import com.eservice.iot.model.Person;
 import com.eservice.iot.model.ResponseModel;
 import com.eservice.iot.model.Staff;
 import com.eservice.iot.model.VisitRecord;
@@ -57,12 +55,12 @@ public class StaffService {
     /**
      * 当天已签到员工列表
      */
-    private ArrayList<Person> staffSignInList = new ArrayList<>();
+    private ArrayList<VisitRecord> staffSignInList = new ArrayList<>();
 
     /**
      * 当天已签到VIP员工列表
      */
-    private ArrayList<Person> vipSignInList = new ArrayList<>();
+    private ArrayList<VisitRecord> vipSignInList = new ArrayList<>();
 
     @Autowired
     private TokenService tokenService;
@@ -70,16 +68,15 @@ public class StaffService {
     @Autowired
     private TagService tagService;
 
-
-    @Autowired
-    private DingDingService dingDingService;
-
     private ThreadPoolTaskExecutor mExecutor;
 
     /**
      * 查询开始时间,单位为秒
      */
     private Long queryStartTime = 0L;
+
+    @Autowired
+    private MqttMessageHelper mqttMessageHelper;
 
 
     public StaffService() {
@@ -149,6 +146,10 @@ public class StaffService {
         if (staffSignInList != null & staffSignInList.size() > 0) {
             staffSignInList.clear();
         }
+
+        if (vipSignInList != null & vipSignInList.size() > 0) {
+            vipSignInList.clear();
+        }
     }
 
     private void processStaffResponse(String body) {
@@ -177,10 +178,11 @@ public class StaffService {
         if (responseModel != null && responseModel.getResult() != null) {
             ArrayList<VisitRecord> tempList = (ArrayList<VisitRecord>) JSONArray.parseArray(responseModel.getResult(), VisitRecord.class);
             if (tempList != null && tempList.size() > 0) {
-                ArrayList<Person> sendSignInList = new ArrayList<>();
-                ArrayList<Person> sendVipList = new ArrayList<>();
+                ArrayList<VisitRecord> sendSignInList = new ArrayList<>();
+                ArrayList<VisitRecord> sendVipList = new ArrayList<>();
                 for (VisitRecord visitRecord : tempList) {
                     List<String> tagList = visitRecord.getPerson().getTag_id_list();
+                    ///签到相关
                     boolean needSignIn = false;
                     if (tagList != null) {
                         for (int i = 0; i < tagList.size() && !needSignIn; i++) {
@@ -193,19 +195,19 @@ public class StaffService {
                     if (needSignIn) {
                         boolean exit = false;
                         for (int i = 0; i < staffSignInList.size() && !exit; i++) {
-                            if (staffSignInList.get(i).getPerson_id().equals(visitRecord.getPerson().getPerson_id())) {
+                            if (staffSignInList.get(i).getPerson().getPerson_id().equals(visitRecord.getPerson().getPerson_id())) {
                                 exit = true;
                             }
                         }
                         if (!exit) {
-                            staffSignInList.add(visitRecord.getPerson());
-                            //如果是程序initial，则不推送(保罗client和钉钉等)考勤
+                            staffSignInList.add(visitRecord);
                             if (!initial) {
-                                sendSignInList.add(visitRecord.getPerson());
+                                sendSignInList.add(visitRecord);
                             }
                         }
                     }
 
+                    ///VIP相关
                     boolean isVIP = false;
                     if (tagList != null) {
                         for (int i = 0; i < tagList.size() && !isVIP; i++) {
@@ -218,74 +220,52 @@ public class StaffService {
                     if (isVIP) {
                         boolean exit = false;
                         for (int i = 0; i < vipSignInList.size() && !exit; i++) {
-                            if (vipSignInList.get(i).getPerson_id().equals(visitRecord.getPerson().getPerson_id())) {
+                            if (vipSignInList.get(i).getPerson().getPerson_id().equals(visitRecord.getPerson().getPerson_id())) {
                                 exit = true;
                             }
                         }
                         if (!exit) {
-                            vipSignInList.add(visitRecord.getPerson());
+                            vipSignInList.add(visitRecord);
                             if (!initial) {
-                                sendVipList.add(visitRecord.getPerson());
+                                sendVipList.add(visitRecord);
                             }
                         }
                     }
                     //建立线程池发送钉钉
-                    if (sendSignInList.size() > 0) {
-                        if (mExecutor == null) {
-                            initExecutor();
-                        }
-                        for (Person person : sendSignInList) {
-                            String phoneNum = person.getPerson_information().getPhone();
-                            boolean found = false;
-                            OapiUserListResponse.Userlist dingUser = null;
-                            if (phoneNum != null) {
-                                for (int i = 0; i < dingDingService.getDingDingUserList().size() && !found; i++) {
-                                    String mobile = dingDingService.getDingDingUserList().get(i).getMobile();
-                                    if (mobile != null && mobile.equals(phoneNum)) {
-                                        found = true;
-                                        dingUser = dingDingService.getDingDingUserList().get(i);
-                                    }
-                                }
-                            }
-                            if (found & dingUser != null) {
-                                OapiUserListResponse.Userlist finalDingUser = dingUser;
-                                mExecutor.execute(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //TODO:发送钉钉
-//                                        try {
-//                                            dingDingService.sendTextMessage(finalDingUser.getUserid(), "上班考勤：" + formatter.format(new Date()));
-//                                            logger.warn("{} 发送钉钉！", finalDingUser.getName());
-//                                        } catch (ApiException e) {
-//                                            e.printStackTrace();
-//                                            //TODO:发送考勤数据失败
-//                                        }
-                                    }
-                                });
-                            }
-                        }
-                    }
-
-                    ///由于VIP和考勤信息可能存在重复，所以在把消息推送至client时，两个send数组进行合并
-                    for (Person vip : sendVipList) {
-                        ///Person的meta字段设置成VIP，则前台显示VIP
-                        vip.setMeta(Constant.VIP);
-                        ///由于sendVipList和sendSignInList来之同一个数组，所以可以根据person对象进行contain
-                        if (!sendSignInList.contains(vip)) {
-                            ///VIP员工，不在本次考勤上传数组中，但是需要发送到大屏欢迎
-                            sendSignInList.add(vip);
-                        }
-                    }
                     if (mExecutor == null) {
                         initExecutor();
                     }
-                    mExecutor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            //TODO:发送Client
-                            logger.error("socket发送Client！");
-                        }
-                    });
+
+//                    ///由于VIP和考勤信息可能存在重复，所以在把消息推送至client时，两个send数组进行合并
+//                    for (Person vip : sendVipList) {
+//                        ///Person的meta字段设置成VIP，则前台显示VIP
+//                        vip.setMeta(Constant.VIP);
+//                        ///由于sendVipList和sendSignInList来之同一个数组，所以可以根据person对象进行contain
+//                        if (!sendSignInList.contains(vip)) {
+//                            ///VIP员工，不在本次考勤上传数组中，但是需要发送到大屏欢迎
+//                            sendSignInList.add(vip);
+//                        }
+//                    }
+                    if (sendSignInList.size() > 0) {
+                        mExecutor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                //通过MQTT将员工签到信息发送至web端
+                                logger.warn("Send sign in list to web, size ==> {}", sendSignInList.size() );
+                                mqttMessageHelper.sendToClient("staff/sign_in", JSON.toJSONString(sendSignInList));
+                            }
+                        });
+                    }
+                    if(sendVipList.size() > 0) {
+                        mExecutor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                //通过MQTT将VIP签到信息发送至web端的VIP页面
+                                logger.warn("Send VIP list to web, size ==> {}", sendVipList.size() );
+                                mqttMessageHelper.sendToClient("staff/vip/sign_in", JSON.toJSONString(sendVipList));
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -339,5 +319,13 @@ public class StaffService {
 
     public ArrayList<Staff> getStaffList() {
         return staffList;
+    }
+
+    public ArrayList<VisitRecord> getStaffSignInList() {
+        return staffSignInList;
+    }
+
+    public ArrayList<VisitRecord> getVipSignInList() {
+        return vipSignInList;
     }
 }

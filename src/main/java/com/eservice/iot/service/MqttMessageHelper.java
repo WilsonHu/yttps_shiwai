@@ -74,6 +74,8 @@ public class MqttMessageHelper {
              * @msg: description
              * {
              *     "result": 1,
+             *     "name":"visitor name",
+			 *     "isChinese":1,
              *     "msg":"xxx"
              * }
              */

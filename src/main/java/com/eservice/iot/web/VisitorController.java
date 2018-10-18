@@ -107,20 +107,38 @@ public class VisitorController {
 
     @PostMapping("/deleteVisitor")
     public Result deleteVisitor(@RequestParam String visitorId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        headers.add("Authorization", tokenService.getToken());
-        HttpEntity entity = new HttpEntity(headers);
-        ResponseEntity<String> responseEntity = restTemplate.exchange(PARK_BASE_URL + "/visitors/" + visitorId, HttpMethod.DELETE, entity, String.class);
-        if (responseEntity.getStatusCodeValue() == ResponseCode.OK) {
-            VisitorPassResult result = new VisitorPassResult();
-            result.setResult(0);
-            result.setMsg("访客被拒绝！");
-            mqttMessageHelper.sendToClient("/visitor/" + visitorId, JSON.toJSONString(result));
-            logger.warn("Visitor is rejected! Visitor ID : ==>{}", visitorId);
-            return ResultGenerator.genSuccessResult();
+        List<Visitor> visitorList = visitorService.getVisitorList();
+        Visitor visitor = null;
+        for (int i = 0; i < visitorList.size() && visitor == null; i++) {
+            if (visitorList.get(i).getVisitor_id().equals(visitorId)) {
+                visitor = visitorList.get(i);
+            }
         }
-        return ResultGenerator.genFailResult("获取访客信息失败！");
+        if(visitor != null) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
+            headers.add("Authorization", tokenService.getToken());
+            HttpEntity entity = new HttpEntity(headers);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(PARK_BASE_URL + "/visitors/" + visitorId, HttpMethod.DELETE, entity, String.class);
+            if (responseEntity.getStatusCodeValue() == ResponseCode.OK) {
+                VisitorPassResult result = new VisitorPassResult();
+                result.setResult(0);
+                result.setName(visitor.getPerson_information().getName());
+                ///去掉空格后去匹配英文字符，“0” ==> English, "1" ==> Chinese
+                boolean isEnglish = visitor.getPerson_information().getName().replaceAll(" ", "").matches("^[a-zA-Z]*");
+                if(isEnglish) {
+                    result.setIsChinese(0);
+                    result.setMsg("Sorry, " + visitor.getPerson_information().getName() + " is not allowed to visit");
+                } else {
+                    result.setIsChinese(1);
+                    result.setMsg("访客 " + visitor.getPerson_information().getName() + " 拒绝来访");
+                }
+                mqttMessageHelper.sendToClient("visitor/" + visitorId, JSON.toJSONString(result));
+                logger.warn("Visitor is rejected! Visitor ID : ==>{}", visitorId);
+                return ResultGenerator.genSuccessResult();
+            }
+        }
+        return ResultGenerator.genFailResult("拒绝访客失败！");
     }
 
     @PostMapping("/acceptVisitor")
@@ -154,13 +172,22 @@ public class VisitorController {
                 if (responseEntity.getStatusCodeValue() == ResponseCode.OK) {
                     VisitorPassResult result = new VisitorPassResult();
                     result.setResult(1);
-                    result.setMsg("同意来访！");
-                    mqttMessageHelper.sendToClient("/visitor/" + visitorId, JSON.toJSONString(result));
+                    result.setName(visitor.getPerson_information().getName());
+                    ///去掉空格后去匹配英文字符，“0” ==> English, "1" ==> Chinese
+                    boolean isEnglish = visitor.getPerson_information().getName().replaceAll(" ", "").matches("^[a-zA-Z]*");
+                    if(isEnglish) {
+                        result.setIsChinese(0);
+                        result.setMsg( "Allow " + visitor.getPerson_information().getName() + " to visit.");
+                    } else {
+                        result.setIsChinese(1);
+                        result.setMsg("访客" + visitor.getPerson_information().getName() + " 同意来访");
+                    }
+                    mqttMessageHelper.sendToClient("visitor/" + visitorId, JSON.toJSONString(result));
                     logger.warn("Visitor is accept! Visitor ID : ==>{}", visitorId);
                     return ResultGenerator.genSuccessResult();
                 }
             }
         }
-        return ResultGenerator.genFailResult("获取访客信息失败！");
+        return ResultGenerator.genFailResult("同意访客失败！");
     }
 }

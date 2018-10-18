@@ -5,7 +5,12 @@ package com.eservice.iot.service;
  */
 public class VisitorPassResult {
     private int result;
+    private String name;
     private String msg;
+    /**
+     * "1" ==> Chinese; "0" ==> English
+     */
+    private int isChinese = 1;
 
     public int getResult() {
         return result;
@@ -21,5 +26,21 @@ public class VisitorPassResult {
 
     public void setMsg(String msg) {
         this.msg = msg;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getIsChinese() {
+        return isChinese;
+    }
+
+    public void setIsChinese(int isChinese) {
+        this.isChinese = isChinese;
     }
 }

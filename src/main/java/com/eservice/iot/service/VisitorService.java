@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -78,22 +79,32 @@ public class VisitorService {
     @Autowired
     private TagService tagService;
 
-    @Autowired
-    private StaffService signInService;
-
-    @Autowired
-    private DingDingService dingDingService;
-
     /**
      * 查询开始时间,单位为秒
      */
     private Long queryStartTime = 0L;
 
-    private int visitorNum = 0;
+    private ThreadPoolTaskExecutor mExecutor;
+
+    @Autowired
+    private MqttMessageHelper mqttMessageHelper;
+
 
     public VisitorService() {
         //准备初始数据，此时获取到访客列表后不去通知，初始化开始查询时间
         queryStartTime = Util.getDateStartTime().getTime() / 1000;
+    }
+
+    /**
+     * 凌晨1点清除签到记录
+     */
+    @Scheduled(cron = "0 0 1 * * ?")
+    public void resetStaffDataScheduled() {
+        logger.info("清除VIP访客签到记录：{}", formatter.format(new Date()));
+
+        if (vipVisitorList != null & vipVisitorList.size() > 0) {
+            vipVisitorList.clear();
+        }
     }
 
     /**
@@ -118,8 +129,7 @@ public class VisitorService {
     }
 
     /**
-     * cron: 秒、分、时、日、月、年
-     * 早上六点至傍晚八点，每10秒钟获取一次当天访客信息
+     * 每10秒钟获取一次当天访客信息
      */
     @Scheduled(fixedRate = 1000 * 10)
     public void fetchVisitorListScheduled() {
@@ -205,10 +215,17 @@ public class VisitorService {
                         }
                     }
                     if (sendVipList.size() > 0) {
-                        visitorSignInList.add(visitRecord);
-                        //如果是程序initial，则不推送钉钉
                         if (!initial) {
-                            //todo:推送client
+                            if(mExecutor == null) {
+                                initExecutor();
+                            }
+                            mExecutor.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    //通过MQTT将VIP签到信息发送至web端的VIP页面
+                                    mqttMessageHelper.sendToClient("visitor/sign_in/vip", JSON.toJSONString(sendVipList));
+                                }
+                            });
                         }
                     }
                 }
@@ -249,7 +266,19 @@ public class VisitorService {
         }
     }
 
+    private void initExecutor() {
+        mExecutor = new ThreadPoolTaskExecutor();
+        mExecutor.setCorePoolSize(2);
+        mExecutor.setMaxPoolSize(5);
+        mExecutor.setThreadNamePrefix("YTTPS-");
+        mExecutor.initialize();
+    }
+
     public List<Visitor> getVisitorList() {
         return visitorList;
+    }
+
+    public List<Person> getVIPVisitorList() {
+        return vipVisitorList;
     }
 }

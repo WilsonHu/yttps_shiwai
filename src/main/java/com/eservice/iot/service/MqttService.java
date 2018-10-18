@@ -41,7 +41,7 @@ public class MqttService {
     public MessageProducer inbound(){
         String addressFormat = "tcp://%s:61613";
         MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter(String.format(addressFormat, brokerHost),"server", mqttClientFactory(),"iot/#");
+                new MqttPahoMessageDrivenChannelAdapter(String.format(addressFormat, brokerHost),"server", mqttClientFactory(),"yttps/#");
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);

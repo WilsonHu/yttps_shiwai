@@ -2,6 +2,7 @@ package com.eservice.iot.web;
 import com.eservice.iot.core.Result;
 import com.eservice.iot.core.ResultGenerator;
 import com.eservice.iot.model.user.User;
+import com.eservice.iot.service.StaffService;
 import com.eservice.iot.service.impl.UserServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,6 +23,8 @@ import java.util.List;
 public class UserController {
     @Resource
     private UserServiceImpl userService;
+    @Resource
+    private StaffService staffService;
 
     /**
      * 该值为default值， Android端传入的参数不能为“0”
@@ -84,5 +88,19 @@ public class UserController {
                 return ResultGenerator.genSuccessResult(user);
             }
         }
+    }
+    @GetMapping("/getStaffNum")
+    public Result getStaffNum() {
+        return ResultGenerator.genSuccessResult(staffService.getStaffList().size());
+    }
+
+    @GetMapping("/getStaffSignInNum")
+    public Result getStaffSignInNum() {
+        return ResultGenerator.genSuccessResult(staffService.getStaffSignInList().size());
+    }
+
+    @GetMapping("/getStaffSignIn")
+    public Result getStaffSignIn() {
+        return ResultGenerator.genSuccessResult(staffService.getStaffSignInList());
     }
 }
