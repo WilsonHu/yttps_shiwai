@@ -133,7 +133,7 @@ public class VisitorController {
                     result.setIsChinese(1);
                     result.setMsg("访客 " + visitor.getPerson_information().getName() + " 拒绝来访");
                 }
-                mqttMessageHelper.sendToClient("visitor/" + visitorId, JSON.toJSONString(result));
+                mqttMessageHelper.sendToClient("visitor/response/" + visitorId, JSON.toJSONString(result));
                 logger.warn("Visitor is rejected! Visitor ID : ==>{}", visitorId);
                 return ResultGenerator.genSuccessResult();
             }
@@ -182,7 +182,7 @@ public class VisitorController {
                         result.setIsChinese(1);
                         result.setMsg("访客" + visitor.getPerson_information().getName() + " 同意来访");
                     }
-                    mqttMessageHelper.sendToClient("visitor/" + visitorId, JSON.toJSONString(result));
+                    mqttMessageHelper.sendToClient("visitor/response/" + visitorId, JSON.toJSONString(result));
                     logger.warn("Visitor is accept! Visitor ID : ==>{}", visitorId);
                     return ResultGenerator.genSuccessResult();
                 }
