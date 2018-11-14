@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class Staff {
     @JsonProperty("tag_id_list")
-    private List<String> tagIdList;
+    private List<String> tag_id_list;
     @JsonProperty("upload_time")
     private Integer uploadTime;
     @JsonProperty("person_information")
@@ -23,16 +23,16 @@ public class Staff {
     @JsonProperty("meta")
     private String meta;
     @JsonProperty("scene_image_id")
-    private String sceneImageId;
+    private String scene_image_id;
     @JsonProperty("staff_id")
     private String staffId;
 
     public List<String> getTag_id_list() {
-        return tagIdList;
+        return tag_id_list;
     }
 
-    public void setTagIdList(List<String> tagIdList) {
-        this.tagIdList = tagIdList;
+    public void setTag_id_list(List<String> tag_id_list) {
+        this.tag_id_list = tag_id_list;
     }
 
     public Integer getUploadTime() {
@@ -75,12 +75,12 @@ public class Staff {
         this.meta = meta;
     }
 
-    public String getSceneImageId() {
-        return sceneImageId;
+    public String getScene_image_id() {
+        return scene_image_id;
     }
 
-    public void setSceneImageId(String sceneImageId) {
-        this.sceneImageId = sceneImageId;
+    public void setScene_image_id(String scene_image_id) {
+        this.scene_image_id = scene_image_id;
     }
 
     public String getStaffId() {
